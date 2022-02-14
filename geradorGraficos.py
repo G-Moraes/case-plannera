@@ -9,21 +9,33 @@ from randomForest import gerarResultadoRandomForest, gerarResultadoZIRRandomFore
 from geradorExcel import gerarExcel
 from tratamentoDados import gerarDados
 
+plt.figure(num=1, figsize=(8, 6))
+
+sns.set(rc={'figure.figsize':(11.7,8.27)})
+
 from random import randint
 
-def gerarGraficoMensal(x_treino, x_teste, y_treino, resultado, comecoMes, fimMes, saveImage = False, name = None):
+def gerarGraficoMensal(x_treino, x_teste, y_treino, y_teste, resultado, comecoMes, fimMes, saveImage = False, name = None):
+
+    plt.clf()
 
     sns.lineplot(x = x_teste['Dia'], y = resultado, label = 'Remessa prevista')
 
-    sns.lineplot(label = 'Mês analisado', x = x_treino['Dia'][comecoMes:fimMes], y = y_treino[comecoMes:fimMes]).set_title('Mês {}/{}'.format(x_treino['Mês'][comecoMes], x_treino['Ano'][comecoMes]))
+    sns.lineplot(label = 'Remessa atual', x = x_treino['Dia'][comecoMes:fimMes], y = y_teste).set_title('Mês {}/{}'.format(x_teste['Mês'][comecoMes], x_teste['Ano'][comecoMes]))
 
     if(saveImage and name):
         plt.savefig(name + '.png')
 
-def gerarGraficoLinear(x_teste, resultado, line, saveImage = False, name = None):
+def gerarGraficoLinear(x_teste, y_teste, resultado, saveImage = False, name = None):
 
-    plt.scatter(x_teste['Volume'], resultado, s = 3)
-    plt.plot(x_teste['Volume'], line, color='r', linewidth = 1)
+    plt.clf()
+
+    plt.scatter(x_teste['Volume'], y_teste, s = 3)
+    plt.plot(x_teste['Volume'], resultado, color = 'r', linewidth = 3)
+
+
+    plt.xlabel("Volume")
+    plt.ylabel("Remessas Previstas")
 
     if(saveImage and name):
         plt.savefig(name + '.png')
@@ -70,51 +82,45 @@ def gerarIndexMesEspecifico(x_treino, mes, ano):
             break
     
     return (comecoMes, fimMes)
-    
-#%%
+# %%
 
-x_treino, x_teste, y_treino = gerarDados(returnValue = True)
+def gerarGraficoMensalClusterEspecifico(x_treino, x_teste, y_treino, y_teste, resultado, comecoMes, specific = False, cluster = None, saveImage = False, name = None):
 
-#%%
-resultadoRF = gerarResultadoRandomForest(x_treino, x_teste, y_treino)
+    plt.clf()
 
-#%%
+    indexes = x_teste.index
 
-comecoMes, fimMes = gerarIndexMesAleatorio(x_treino)
+    if (specific and cluster):
 
-gerarGraficoMensal(x_treino, x_teste, y_treino, resultadoRF, comecoMes, fimMes)
+        clusterIndexes = indexes[x_teste['Cluster_' + cluster] == 1].tolist()
 
-#%%
-gerarExcel(resultadoRF, x_teste, 'RandomForest')
+        sns.lineplot(x = x_teste['Dia'][clusterIndexes], y = resultado[clusterIndexes], label = 'Remessa prevista')
 
-#%%
-resultadoZIR = gerarResultadoZIRRandomForest(x_treino, x_teste, y_treino)
+        sns.lineplot(label = 'Remessa atual', x = x_treino['Dia'][clusterIndexes], y = y_teste).set_title('Mês {}/{}'.format(x_teste['Mês'][comecoMes], x_teste['Ano'][comecoMes]))
 
-#%%
+    else:
 
-comecoMes, fimMes = gerarIndexMesAleatorio(x_treino)
+        clusters = ['A', 'B', 'C', 'D', 'E', 'F', 'J', 'K', 'L', 'M']
 
-gerarGraficoMensal(x_treino, x_teste, y_treino, resultadoZIR, comecoMes, fimMes)
+        fig, axs = plt.subplots(nrows = 5, ncols = 2, squeeze = False)
 
-#%%
-resultadoLR, lineLR = gerarResultadoLinearRegression(x_treino, x_teste, y_treino)
+        for index, value in enumerate(clusters):
 
-#%%
+            clusterIndexes = indexes[x_teste['Cluster_' + value] == 1].tolist()
+            
+            sns.lineplot(legend = False, x = x_teste['Dia'][clusterIndexes], y = resultado[clusterIndexes], label = 'Remessa prevista', ax = axs[index%5][index//5])
 
-gerarGraficoLinear(x_teste, resultadoLR, lineLR)
+            sns.lineplot(legend = False, x = x_treino['Dia'][clusterIndexes], y = y_teste, label = 'Remessa atual', ax = axs[index%5][index//5]).set_title('Cluster {}'.format(value))  
 
-#%%
-comecoMes, fimMes = gerarIndexMesAleatorio(x_treino)
+        handles, labels = axs[0][0].get_legend_handles_labels()
+        
+        fig.legend(handles, labels, loc='upper right')
+        
+        fig.suptitle('Mês {}/{}'.format(x_teste['Mês'][comecoMes], x_teste['Ano'][comecoMes]))
 
-gerarGraficoMensal(x_treino, x_teste, y_treino, resultadoLR, comecoMes, fimMes)
+        fig.subplots_adjust(hspace = 1.2, wspace = 0.3)
 
-#%%
-resultadoRR, lineRidge = gerarResultadoRidgeRegression(x_treino, x_teste, y_treino)
+    if(saveImage and name):
+        plt.savefig(name + '.png')
 
-#%%
-gerarGraficoLinear(x_teste, resultadoRR, lineRidge)
-
-#%%
-comecoMes, fimMes = gerarIndexMesAleatorio(x_treino)
-
-gerarGraficoMensal(x_treino, x_teste, y_treino, resultadoRR, comecoMes, fimMes)
+# %%

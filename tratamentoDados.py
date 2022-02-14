@@ -70,7 +70,7 @@ def separarColunaData(df, datas):
 
     return aux
 
-def gerarDados(returnValue):
+def gerarDados(trainTestSplit = False):
 
     #%% leitura do arquivo
 
@@ -78,7 +78,7 @@ def gerarDados(returnValue):
 
     dados = pd.read_excel(xls, 'Dados Históricos')
 
-    objetivo = pd.read_excel('Plano de Volume.xlsx')
+    objetivo = pd.read_excel(xls, 'Plano de Volume')
 
     #%% gerar os fins de semana
 
@@ -136,7 +136,7 @@ def gerarDados(returnValue):
 
     # %% gerando x e y
 
-    if returnValue == True:
+    if trainTestSplit:
 
         y_treino = dados['Remessas']
 
@@ -147,11 +147,53 @@ def gerarDados(returnValue):
         return (x_treino, x_teste, y_treino)
 
     else:
-
+        
         x = dados.drop(columns = 'Remessas')
 
         y = dados['Remessas']
 
         return (x, y)
+
+# %%
+
+def gerarMesTeste(x, y, mes, ano):
+
+    if(ano != 2019 and ano != 2020):
+        raise ValueError("Ano indicado não existe no conjunto de dados!")
+
+    if((ano == 2019 and mes not in range(10, 13)) or (ano == 2020 and mes not in range(1, 9))):
+        raise ValueError("Mês indicado não existe!")
+
+    for i, value in enumerate(x['Mês']):
+        
+        if((value == mes) and (x['Ano'][i] == ano)):
+            
+            comecoMes = i
+            break
+
+    for i in range(comecoMes, x.shape[0]):
+        
+        if(x['Mês'][i] != x['Mês'][comecoMes] or (i == x.shape[0] -1)):
+            
+            fimMes = i
+            break
+
+    x_teste = x.iloc[comecoMes:fimMes]
+
+    y_teste = y.iloc[comecoMes:fimMes]
+
+    x_treino = x.drop(x_teste.index, axis = 0)
+
+    y_treino = y.drop(y_teste.index, axis = 0)
+
+    x_treino = x_treino.reset_index(drop = True)
+    
+    y_treino = y_treino.reset_index(drop = True)
+
+    x_teste = x_teste.reset_index(drop = True)
+    
+    y_teste = y_teste.reset_index(drop = True)
+
+    return(x_treino, x_teste, y_treino, y_teste)
 
 # %%

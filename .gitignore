@@ -1,3 +1,6 @@
 *.xlsx
 *.png
+*.txt
+__pycache__
+timeSeries.py
 ZirForest.py

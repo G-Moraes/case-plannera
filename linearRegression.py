@@ -3,34 +3,37 @@ from sklearn.linear_model import LinearRegression, Ridge
 
 import numpy as np
 
-def gerarResultadoLinearRegression(x_treino, x_teste, y_treino):
+def gerarResultadoLinearRegression(x_treino, x_teste, y_treino, n = 1):
 
     lm_model = LinearRegression()
 
-    lm_model.fit(x_treino[['Volume', 'Dropsize']], y_treino)
+    features = ['Volume', 'Dropsize', 'Dia', 'Mês', 'Ano', 'é_dia_normal', 'é_feriado',
+       'é_fim_de_semana', 'Cluster_A', 'Cluster_B', 'Cluster_C', 'Cluster_D',
+       'Cluster_E', 'Cluster_F', 'Cluster_J', 'Cluster_K', 'Cluster_L',
+       'Cluster_M']
 
-    res = lm_model.predict(x_teste[['Volume', 'Dropsize']])
+    print('Features utilizadas: {}'.format(features[:n]))
 
-    slope = lm_model.coef_
-    intercept = lm_model.intercept_
+    lm_model.fit(x_treino[features[0:n]], y_treino)
 
-    line = (np.dot(x_teste[['Volume', 'Dropsize']], slope) + intercept)
+    res = lm_model.predict(x_teste[features[:n]])
+    
+    return res
 
-    return (res, line)
-
-def gerarResultadoRidgeRegression(x_treino, x_teste, y_treino):
+def gerarResultadoRidgeRegression(x_treino, x_teste, y_treino, n = 1):
 
     rid_model = Ridge()
 
-    rid_model.fit(x_treino[['Volume', 'Dropsize']], y_treino)
-
-    res = rid_model.predict(x_teste[['Volume', 'Dropsize']])
-
-    slope = rid_model.coef_
-
-    intercept = rid_model.intercept_
+    features = ['Volume', 'Dropsize', 'Dia', 'Mês', 'Ano', 'é_dia_normal', 'é_feriado',
+       'é_fim_de_semana', 'Cluster_A', 'Cluster_B', 'Cluster_C', 'Cluster_D',
+       'Cluster_E', 'Cluster_F', 'Cluster_J', 'Cluster_K', 'Cluster_L',
+       'Cluster_M']
     
-    line = (np.dot(x_teste[['Volume', 'Dropsize']], slope) + intercept)
+    print('Features utilizadas: {}'.format(features[:n]))
 
-    return (res, line)
+    rid_model.fit(x_treino[features[:n]], y_treino)
+
+    res = rid_model.predict(x_teste[features[:n]])
+
+    return res
 # %%
