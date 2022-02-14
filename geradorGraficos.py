@@ -9,24 +9,28 @@ from randomForest import gerarResultadoRandomForest, gerarResultadoZIRRandomFore
 from geradorExcel import gerarExcel
 from tratamentoDados import gerarDados
 
+import numpy as np
+
+from scipy.stats import skew, kurtosis
+
 plt.figure(num=1, figsize=(8, 6))
 
 sns.set(rc={'figure.figsize':(11.7,8.27)})
 
 from random import randint
 
-def gerarGraficoMensal(x_treino, x_teste, y_treino, y_teste, resultado, comecoMes, fimMes, saveImage = False, name = None):
+def gerarGraficoMensal(x_treino, x_teste, y_teste, resultado, comecoMes, saveImage = False, nome = None):
 
     plt.clf()
 
     sns.lineplot(x = x_teste['Dia'], y = resultado, label = 'Remessa prevista')
 
-    sns.lineplot(label = 'Remessa atual', x = x_treino['Dia'][comecoMes:fimMes], y = y_teste).set_title('Mês {}/{}'.format(x_teste['Mês'][comecoMes], x_teste['Ano'][comecoMes]))
+    sns.lineplot(label = 'Remessa atual', x = x_treino['Dia'][comecoMes:y_teste.shape[0]-1], y = y_teste).set_title('Mês {}/{}'.format(x_teste['Mês'][comecoMes], x_teste['Ano'][comecoMes]))
 
-    if(saveImage and name):
-        plt.savefig(name + '.png')
+    if(saveImage and nome):
+        plt.savefig(nome + '.png')
 
-def gerarGraficoLinear(x_teste, y_teste, resultado, saveImage = False, name = None):
+def gerarGraficoLinear(x_teste, y_teste, resultado, saveImage = False, nome = None):
 
     plt.clf()
 
@@ -37,8 +41,8 @@ def gerarGraficoLinear(x_teste, y_teste, resultado, saveImage = False, name = No
     plt.xlabel("Volume")
     plt.ylabel("Remessas Previstas")
 
-    if(saveImage and name):
-        plt.savefig(name + '.png')
+    if(saveImage and nome):
+        plt.savefig(nome + '.png')
 
 def gerarIndexMesAleatorio(x_treino):
     
@@ -82,9 +86,8 @@ def gerarIndexMesEspecifico(x_treino, mes, ano):
             break
     
     return (comecoMes, fimMes)
-# %%
 
-def gerarGraficoMensalClusterEspecifico(x_treino, x_teste, y_treino, y_teste, resultado, comecoMes, specific = False, cluster = None, saveImage = False, name = None):
+def gerarGraficoMensalClusterEspecifico(x_treino, x_teste, y_teste, resultado, comecoMes, specific = False, cluster = None, saveImage = False, nome = None):
 
     plt.clf()
 
@@ -120,7 +123,27 @@ def gerarGraficoMensalClusterEspecifico(x_treino, x_teste, y_treino, y_teste, re
 
         fig.subplots_adjust(hspace = 1.2, wspace = 0.3)
 
-    if(saveImage and name):
-        plt.savefig(name + '.png')
+    if(saveImage and nome):
+        plt.savefig(nome + '.png')
 
-# %%
+def gerarHistograma(y, saveImage = False, nome = None):
+
+    mean = np.mean(y)
+    median = np.median(y)
+
+    plt.axvline(mean, color = 'r', linestyle = '-')
+    plt.axvline(median, color = 'g', linestyle = '-')
+
+    sns.histplot(y, kde = True)
+
+    plt.xlabel('Remessas')
+    plt.ylabel('Quantidade')
+
+    print('Assimetria: {}'.format(skew(y)))
+
+    print('Curtose: {}'.format(kurtosis(y)))
+
+    plt.legend({'Média': mean,'Mediana': median})
+
+    if(saveImage and nome):
+        plt.savefig(nome + '.png')

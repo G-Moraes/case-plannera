@@ -1,12 +1,13 @@
 
 #%%
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
 
 from sklego.meta import ZeroInflatedRegressor
 
 import numpy as np
+
+#%% essa função serve para gerar os melhores parametros para o regressor Random Forest
 
 def findBestParams(x, y):
 
@@ -37,12 +38,14 @@ def findBestParams(x, y):
     
     rf_grid.fit(x, y)
     
-    print('Best set of hyperparameters obtained: ' + str(rf_grid.best_params_) + '\n' + 'Accuracy obtained: ' + "{:.2f}".format(rf_grid.best_score_) + '\n\n') 
+    print('Best set of hyperparameters obtained: ' + str(rf_grid.best_params_)) 
 
     return(rf_grid.best_params_)
 
+# %% aqui é criado o modelo, treinado e retorna o resultado predito
 def gerarResultadoRandomForest(x_treino, x_teste, y_treino, optimize = False):
 
+    #%% caso queira a otimização de parâmetros
     if(optimize):
 
         best_hyperparams = findBestParams(x_treino, y_treino)
@@ -55,22 +58,27 @@ def gerarResultadoRandomForest(x_treino, x_teste, y_treino, optimize = False):
                                     max_features = best_hyperparams['max_features']
                                     )
 
+    #%% senão, serão default
     else:
         
         model = RandomForestRegressor()
 
+    # %% o modelo é treinado
     model.fit(x_treino, y_treino)
 
+    # %% e aqui, a predição
     res = model.predict(x_teste)
     
     return(res)
-    
+
+# %% essa função utiliza a versão Zero-Inflated do Random Forest   
 def gerarResultadoZIRRandomForest(x_treino, x_teste, y_treino, optimize = False):
     
     if(optimize):
 
         best_hyperparams = findBestParams(x_treino, y_treino)
 
+        # %% o modelo utiliza um classificador para checar se um valor é ou não 0
         zir = ZeroInflatedRegressor(
             
             classifier = RandomForestClassifier(n_estimators = best_hyperparams['n_estimators'],
@@ -80,7 +88,8 @@ def gerarResultadoZIRRandomForest(x_treino, x_teste, y_treino, optimize = False)
                                     max_leaf_nodes = best_hyperparams['max_leaf_nodes'],
                                     max_features = best_hyperparams['max_features']
                                     ),
-
+        
+            # %% e o regressor para prever os valores que não são 0
             regressor = RandomForestRegressor(n_estimators = best_hyperparams['n_estimators'],
                                     max_depth = best_hyperparams['max_depth'],
                                     min_samples_leaf = best_hyperparams['min_samples_leaf'],
@@ -94,8 +103,10 @@ def gerarResultadoZIRRandomForest(x_treino, x_teste, y_treino, optimize = False)
 
         zir = ZeroInflatedRegressor(classifier = RandomForestClassifier(), regressor = RandomForestRegressor())
 
+    # %% o treinamento do modelo
     zir.fit(x_treino, y_treino)
 
+    # e a predição
     res = zir.predict(x_teste)
 
     return(res)

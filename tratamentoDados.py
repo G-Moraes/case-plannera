@@ -45,12 +45,15 @@ def gerarFeriados(totalDatas):
     return isHoliday
 
 def gerarDiasNormais(df):
-    
+
+    #gera indices de todos os dias que não são fins de semana nem feriados    
     isWorkingDay = np.where((df['é_fim_de_semana'] == 1) | (df['é_feriado'] == 1), 0, 1)
 
     return isWorkingDay
 
 def separarColunaData(df, datas):
+
+    #separa as datas em dia, mês e ano
 
     aux = df
 
@@ -72,7 +75,7 @@ def separarColunaData(df, datas):
 
 def gerarDados(trainTestSplit = False):
 
-    #%% leitura do arquivo
+    #%% leitura do arquivo dados é o dataset histórico, e o objetivo é o plano do mês 09/2020
 
     xls = pd.ExcelFile('Plannera - Case de Data Science.xlsx')
 
@@ -112,29 +115,43 @@ def gerarDados(trainTestSplit = False):
 
     #%% Reorganizando o dataset
     
+    #%% gera a média de toda a coluna 'Dropsize', excluindo os valores 0
+    
     meanDropsize = (dados['Dropsize'].loc[dados['Dropsize'] != 0]).mean()
 
+    #%% cria a coluna 'Dropsize' no dataset objetivo, já que não existia antes, 
+    # e atribui a média de dropsize dos dados históricos a mesma
+    
     objetivo['Dropsize'] = meanDropsize
     
+    #%% atribui o valor médio de 'Dropsize' a somente os elementos do dataset
+    #objetivo que correspondem a um dia normal de trabalho
+
     indexes = objetivo.index
     
     meanIndexes = indexes[objetivo['é_dia_normal'] != 1].tolist()
 
     objetivo.loc[meanIndexes, 'Dropsize'] = 0
 
+    #%% renomeia a coluna "Cluster" para ficar padronizado com o arquivo "Plano de Volume"
+
     objetivo = objetivo.rename(columns = {'CLUSTER': 'Cluster'})
+
+    #%% reordena as colunas feature de ambos os datasets para ficarem padrão
 
     dados = dados.reindex(sorted(dados.columns), axis=1)
 
     objetivo = objetivo.reindex(sorted(objetivo.columns), axis=1)
 
-    #%% gerando os  dummies de colunas categóricas
+    #%% gerando os dummies de colunas categóricas
 
     dados = pd.get_dummies(dados)
 
     objetivo = pd.get_dummies(objetivo)
 
     # %% gerando x e y
+
+    # caso queira gerar treino e objetivo como treino e teste:
 
     if trainTestSplit:
 
@@ -146,6 +163,8 @@ def gerarDados(trainTestSplit = False):
 
         return (x_treino, x_teste, y_treino)
 
+    # caso queira somente o conjunto de dados históricos para testar um mês aleatório 
+
     else:
         
         x = dados.drop(columns = 'Remessas')
@@ -154,9 +173,12 @@ def gerarDados(trainTestSplit = False):
 
         return (x, y)
 
-# %%
+# %% função feita para remover um mês do dataset de dados históricos, criar um outro dataset
+# de treino com o mês removido, e reindexar o antigo dataset sem o mês removido
 
 def gerarMesTeste(x, y, mes, ano):
+
+    #%% checagem para ver se o mês e o ano indicado fazem parte do dataset histórico
 
     if(ano != 2019 and ano != 2020):
         raise ValueError("Ano indicado não existe no conjunto de dados!")
@@ -164,13 +186,16 @@ def gerarMesTeste(x, y, mes, ano):
     if((ano == 2019 and mes not in range(10, 13)) or (ano == 2020 and mes not in range(1, 9))):
         raise ValueError("Mês indicado não existe!")
 
+
+    # %% aqui é para determinar o indice do começo do mês indicado para servir como teste
     for i, value in enumerate(x['Mês']):
         
         if((value == mes) and (x['Ano'][i] == ano)):
             
             comecoMes = i
             break
-
+    
+    # %% agora o índice do fim do mês
     for i in range(comecoMes, x.shape[0]):
         
         if(x['Mês'][i] != x['Mês'][comecoMes] or (i == x.shape[0] -1)):
@@ -185,6 +210,9 @@ def gerarMesTeste(x, y, mes, ano):
     x_treino = x.drop(x_teste.index, axis = 0)
 
     y_treino = y.drop(y_teste.index, axis = 0)
+
+    # %% resetando os indices do dataset histórico para não ficar um buraco, e tambem
+    # resetando o indice do dataset novo com o mês teste
 
     x_treino = x_treino.reset_index(drop = True)
     
