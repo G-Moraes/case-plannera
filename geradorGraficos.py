@@ -1,13 +1,6 @@
 #%%
-from multiprocessing.sharedctypes import Value
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-from linearRegression import gerarResultadoLinearRegression, gerarResultadoRidgeRegression
-from randomForest import gerarResultadoRandomForest, gerarResultadoZIRRandomForest
-
-from geradorExcel import gerarExcel
-from tratamentoDados import gerarDados
 
 import numpy as np
 
